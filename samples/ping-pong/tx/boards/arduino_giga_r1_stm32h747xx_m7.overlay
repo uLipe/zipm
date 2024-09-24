@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2024 Felipe Neves
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,cdc-acm-uart0 = &cdc_acm_uart0;
+	};
+};
+
+zephyr_udc0: &usbotg_fs {
+	pinctrl-0 = <&usb_otg_fs_dm_pa11 &usb_otg_fs_dp_pa12>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};
+
+&cdc_acm_uart0 {
+	status = "okay";
+};
+
+&sram4 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+  
+	zipm_pool: zipm_pool@38000000 {
+		compatible = "zipm,node-pool";
+		block-size = <32>;
+		nodes-quantity = <32>;
+		reg = <0x38000000>;
+	};
+
+	zipm_doorbell_queue: zipm_doorbell_queue@38008000 {
+		compatible = "zipm,shared-queue";
+		reg = <0x38008000>;
+	};
+  
+	zipm_rx_queue: zipm_rx_queue@38008400 {
+		compatible = "zipm,shared-queue";
+		reg = <0x38008400>;
+	};
+
+	zipm_device0: zipm_device {
+        compatible = "zipm,message-device";
+        status = "okay";
+        node-pool = <&zipm_pool>;
+        shared-queues = <&zipm_doorbell_queue &zipm_rx_queue>;
+        ipc = <&mailbox>;
+		should-init;
+    };
+};
+
+&mailbox {
+	status = "okay";
+};
+
+&usart2 {
+	status = "disabled";
+};

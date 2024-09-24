@@ -1,0 +1,67 @@
+# Copyright (c) 2024 Felipe Neves
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Zephyr Inter Processor Message device descriptor. Example usage:
+
+    &shared_ram {
+
+      #address-cells = <1>;
+      #size-cells = <0>;
+
+      zipm_device: zipm_device {
+        compatible = "zipm,message-device";
+        status = "okay";
+        node-pool = <&zipm_pool>;
+        shared-queues = <&zipm_tx_queue &zipm_rx_queue>;
+        ipc = <&ipm0>;
+        should-init = <true>;
+      };
+
+      zipm_pool: zipm_pool@0 {
+        compatible = "zipm,node-pool";
+        block-size = <32>;
+        nodes-quantity = <16>;
+        reg = <0x0>;
+      };
+
+      zipm_tx_queue: zipm_tx_queue@800 {
+        compatible = "zipm,shared-queue";
+        reg = <0x800>;
+       };
+
+      zipm_rx_queue: zipm_rx_queue@c00 {
+        compatible = "zipm,shared-queue";
+        reg = <0xc00>;
+      };
+
+    };
+
+compatible: "zipm,message-device"
+
+properties:
+  node-pool:
+    required: true
+    type: phandle
+    description: |
+      node pool object reference
+  
+  shared-queues:
+    required: true
+    type: phandles
+    description: |
+      one or more shared queues reference
+
+  ipc:
+    required: true
+    type: phandle
+    description: |
+      reference to the cross-core device node
+  
+  should-init:
+    type: boolean
+    description: |
+      if present this zipm device should also
+      initialize the shared memory area.
+
+include: [base.yaml]

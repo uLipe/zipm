@@ -1,0 +1,35 @@
+# Copyright (c) 2024 Felipe Neves
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Zephyr Inter Processor Message memory pool descriptor. Example usage:
+
+    &shared_ram {
+
+      #address-cells = <1>;
+      #size-cells = <0>;
+
+      zipm_pool: zipm_pool@0 {
+        compatible = "zipm,node-pool";
+        block-size = <32>;
+        nodes-quantity = <16>;
+        reg = <0x0>;
+      };
+    };
+
+compatible: "zipm,node-pool"
+
+properties:
+  block-size:
+    required: true
+    type: int
+    description: |
+      Size in bytes of the memory block per node
+  
+  nodes-quantity:
+    required: true
+    type: int
+    description: |
+      Number of nodes available in the current pool
+
+include: [base.yaml]
