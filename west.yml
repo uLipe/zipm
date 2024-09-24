@@ -1,0 +1,16 @@
+# Copyright (c) 2024 Felipe Neves
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  self:
+    path: lkmotor_mf4005_driver
+
+  remotes:
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyr
+      repo-path: zephyr
+      revision: main
