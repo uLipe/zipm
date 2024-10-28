@@ -9,6 +9,25 @@
 
 #define ZIPM_SHARED_Q_MAGIC_1 	0x5a49504d
 #define ZIPM_SHARED_Q_MAGIC_2 	0x51554555
+#define ZIPM_SHARED_Q_LOCK_FREE	0x4d50495a
+
+static inline void zipm_shared_queue_lock(volatile const struct zipm_shared_queue *sq)
+{
+	int key = irq_lock();
+	while (!atomic_cas((atomic_val_t *)&sq->control, ZIPM_SHARED_Q_LOCK_FREE,
+			   ZIPM_SHARED_Q_MAGIC_1)) {
+		;
+	}
+	irq_unlock(key);
+}
+
+static inline void zipm_shared_queue_unlock(volatile const struct zipm_shared_queue *sq)
+{
+	int key = irq_lock();
+	atomic_set((atomic_val_t *)&sq->control, ZIPM_SHARED_Q_LOCK_FREE);
+	irq_unlock(key);
+
+}
 
 int zipm_shared_queue_initialize(volatile void *shared_memory_address, int size)
 {
@@ -23,6 +42,7 @@ int zipm_shared_queue_initialize(volatile void *shared_memory_address, int size)
 	int key = irq_lock();
 
 	sq = (struct zipm_shared_queue *)shared_memory_address;	
+	atomic_set((atomic_t *)&sq->control, 0);
 	sq->write_idx = 0;
 	sq->read_idx = 0;
 	sq->avail = 0;
@@ -31,6 +51,7 @@ int zipm_shared_queue_initialize(volatile void *shared_memory_address, int size)
 	sq->magic_2 = ZIPM_SHARED_Q_MAGIC_2;
 	sq->descs = (struct zipm_node_descriptor *)((uint32_t)shared_memory_address +
 						    sizeof(struct zipm_shared_queue));
+	atomic_set((atomic_val_t *)&sq->control, ZIPM_SHARED_Q_LOCK_FREE);
 	irq_unlock(key);
 
 	return 0;
@@ -78,6 +99,7 @@ int zipm_shared_queue_get(volatile struct zipm_shared_queue *sq, struct zipm_nod
 		return -EINVAL;
 
 	int key = irq_lock();
+	zipm_shared_queue_lock(sq);
 
 	read = sq->read_idx;
 	end = sq->end;
@@ -86,6 +108,7 @@ int zipm_shared_queue_get(volatile struct zipm_shared_queue *sq, struct zipm_nod
 	descs = sq->descs;
 
 	if(!avail) {
+		zipm_shared_queue_unlock(sq);
 		irq_unlock(key);
 		return -ENOENT;
 	}
@@ -101,6 +124,7 @@ int zipm_shared_queue_get(volatile struct zipm_shared_queue *sq, struct zipm_nod
 	atomic_set((atomic_t *)&sq->read_idx, read);	
 	atomic_set((atomic_t *)&sq->avail, avail);	
 
+	zipm_shared_queue_unlock(sq);
 	irq_unlock(key);
 
 	return 0;
@@ -118,6 +142,7 @@ int zipm_shared_queue_push(volatile struct zipm_shared_queue *sq, const struct z
 		return -EINVAL;
 
 	int key = irq_lock();
+	zipm_shared_queue_lock(sq);
 
 	write = sq->write_idx;
 	read = sq->read_idx;
@@ -126,6 +151,7 @@ int zipm_shared_queue_push(volatile struct zipm_shared_queue *sq, const struct z
 	descs = sq->descs;
 
 	if(avail == end) {
+		zipm_shared_queue_unlock(sq);
 		irq_unlock(key);
 		return -ENOENT;
 	}
@@ -140,6 +166,7 @@ int zipm_shared_queue_push(volatile struct zipm_shared_queue *sq, const struct z
 
 	atomic_set((atomic_t *)&sq->write_idx, write);
 	atomic_set((atomic_t *)&sq->avail, avail);
+	zipm_shared_queue_unlock(sq);
 	irq_unlock(key);
 
 	return 0;

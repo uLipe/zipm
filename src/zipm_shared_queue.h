@@ -14,6 +14,7 @@
 
 __packed struct zipm_shared_queue {
     uint32_t magic_1;
+    uint32_t control;
     uint32_t write_idx;
     uint32_t read_idx;
     uint32_t avail;
