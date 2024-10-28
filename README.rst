@@ -43,6 +43,11 @@ Getting started with ZIPM
 Please refer the ``samples`` folder inside of this module to see some basic use
 cases of ZIPM, they were built for usage without hardware for quick getting started.
 
+Understand the design
+*********************
+Please refer the folder ``doc`` to get more from the design of
+the ZIPM.
+
 Get in touch!
 *************
 If you have some questions, wants to contribute please contact me at:
