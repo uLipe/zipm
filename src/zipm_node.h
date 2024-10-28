@@ -15,7 +15,7 @@
 #define ZIPM_NODE_FLAGS_NEXT    (1 << 1)
 #define ZIPM_NODE_FLAGS_EMPTY   (1 << 2)
 
-struct zipm_node_descriptor {
+__packed struct zipm_node_descriptor {
     uint32_t addr;
     uint32_t size;
     uint32_t flags;

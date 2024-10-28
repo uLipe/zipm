@@ -52,6 +52,26 @@ you should see something similar on the console:
     9012: Other core said: Hello from other side!
     9512: Other core said: Hello from other side!
 
+Also you can connect the console of the secondary core to see the
+message from primary core arriving to it:
+
+.. code-block:: console
+
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+    Primary core asked: Say something secondary core! , so let's say something 
+
 You should see also the LED0 (if present) on your board blinking
 every time an event arrives to one of the CPUs.
 

@@ -20,10 +20,9 @@ int zipm_shared_queue_initialize(volatile void *shared_memory_address, int size)
 	if(!size)
 		return - EINVAL;
 
-	sq = (struct zipm_shared_queue *)shared_memory_address;	
 	int key = irq_lock();
 
-	sq->event = 0;
+	sq = (struct zipm_shared_queue *)shared_memory_address;	
 	sq->write_idx = 0;
 	sq->read_idx = 0;
 	sq->avail = 0;
@@ -32,9 +31,6 @@ int zipm_shared_queue_initialize(volatile void *shared_memory_address, int size)
 	sq->magic_2 = ZIPM_SHARED_Q_MAGIC_2;
 	sq->descs = (struct zipm_node_descriptor *)((uint32_t)shared_memory_address +
 						    sizeof(struct zipm_shared_queue));
-
-	memset(sq->descs, 0x00, sizeof(struct zipm_shared_queue) * size);
-
 	irq_unlock(key);
 
 	return 0;
@@ -147,32 +143,6 @@ int zipm_shared_queue_push(volatile struct zipm_shared_queue *sq, const struct z
 	irq_unlock(key);
 
 	return 0;
-}
-
-int zipm_shared_queue_set_event(volatile struct zipm_shared_queue *sq, uint32_t event)
-{
-	if(!sq)
-		return -EINVAL;
-
-	int key = irq_lock();
-	atomic_set((atomic_t *)&sq->event, event);
-	irq_unlock(key);
-
-	return 0;
-}
-
-int zipm_shared_queue_get_event(volatile struct zipm_shared_queue *sq) 
-{
-	uint32_t ev;
-
-	if(!sq)
-		return -EINVAL;
-
-	int key = irq_lock();
-	ev = sq->event;
-	irq_unlock(key);
-
-	return ev;
 }
 
 bool zipm_shared_queue_has_data(volatile struct zipm_shared_queue *sq)

@@ -121,7 +121,7 @@ static inline int zipm_send(const struct device *zdev, const void *data, size_t 
  *
  * @param zdev pointer to the ZIPM device
  * @param data pointer where to store the data
- * @param size size in bytes of the storage
+ * @param size pointer to store the size of received block
  * @param shared_queue_number desired shared queue to extract data
  *
  * @return 0 if extracted all the data, positive value if there is
@@ -136,7 +136,7 @@ static inline int zipm_send(const struct device *zdev, const void *data, size_t 
  * was fragmented, so user needs to call this function multiple times
  * until it returns 0 or -ENOMEM to reassembly the fragmented data.
  */
-static inline int zipm_receive(const struct device *zdev, void *data, size_t size,
+static inline int zipm_receive(const struct device *zdev, void *data, size_t *size,
 		 int shared_queue_number)
 {
 	const struct zipm_device_api *api =

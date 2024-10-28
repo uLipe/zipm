@@ -73,7 +73,7 @@ int zipm_node_pool_initialize(uint32_t block_size,
 	return 0;
 }
 
-struct zipm_node_pool_header *zipm_node_pool_get(volatile void *shared_memory_address)
+struct zipm_node_pool_header *zipm_node_pool_access(volatile void *shared_memory_address)
 {
 	struct zipm_node_pool_header *h = (struct zipm_node_pool_header *)shared_memory_address;
 

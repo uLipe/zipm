@@ -7,6 +7,7 @@
 #define DT_DRV_COMPAT zipm_message_device
 
 #include <errno.h>
+#include <zephyr/cache.h>
 #include <zipm/zipm.h>
 #include "zipm_node_pool.h"
 #include "zipm_shared_queue.h"
@@ -127,7 +128,7 @@ static int zipm_dev_send(const struct device *zdev, const void *data, size_t siz
 	}
 	
 	do {
-
+		uintptr_t from = (uintptr_t)data;
 		mem = zipm_node_pool_alloc(dev_data->node_pool);
 		if(!mem) {
 			ret = k_sem_take(&dev_data->shared_queue_sem, K_MSEC(wait_time));
@@ -139,18 +140,18 @@ static int zipm_dev_send(const struct device *zdev, const void *data, size_t siz
 			continue;
 		}
 
-		LOG_DBG("Block allocated! remaining to transfer: %d", remaining);
+		LOG_DBG("Block allocated! remaining to transfer: %d\n", remaining);
 
 		desc.addr = (uint32_t)mem;
 		desc.size = dev_cfg->node_pool_block_size;
 		if(remaining > desc.size) {
-			memcpy((void *)mem, &data+copied, remaining);
-			copied += remaining;
+			memcpy((void *)mem, (const void *)(from+copied), desc.size);
+			copied += desc.size;
 			desc.flags = ZIPM_NODE_FLAGS_NEXT;
 			remaining -= desc.size;
 		} else {
-			memcpy((void *)mem, &data+copied, desc.size);
-			copied += desc.size;
+			memcpy((void *)mem, (const void *)(from+copied), remaining);
+			copied += remaining;
 			desc.flags = ZIPM_NODE_FLAGS_END;
 			remaining = 0;
 		}
@@ -165,7 +166,7 @@ static int zipm_dev_send(const struct device *zdev, const void *data, size_t siz
 	return ipm_send(dev_cfg->ipc_device, 0, 0, NULL, 0);
 }
 
-static int zipm_dev_receive(const struct device *zdev, void *data, size_t size,
+static int zipm_dev_receive(const struct device *zdev, void *data, size_t *size,
 		 int shared_queue_number)
 {
 	int fragmented;
@@ -176,11 +177,6 @@ static int zipm_dev_receive(const struct device *zdev, void *data, size_t size,
 
 	if(shared_queue_number >= dev_data->noof_queues)
 		return -EINVAL;
-
-	if(size < dev_cfg->node_pool_block_size && data) {
-		LOG_ERR("Not enough space provided to extract block of data");
-		return -EINVAL;		
-	}
 
 	sq = zipm_shared_queue_access((void *)dev_cfg->queues_location[shared_queue_number]);
 	if(!sq) {
@@ -194,7 +190,7 @@ static int zipm_dev_receive(const struct device *zdev, void *data, size_t size,
 		return -ENOMEM;
 	}
 
-	if(!(desc.flags & ZIPM_NODE_FLAGS_EMPTY) && data && size) {
+	if(!(desc.flags & ZIPM_NODE_FLAGS_EMPTY) && data) {
 		memcpy(data, (const void *)desc.addr, desc.size);
 	}
 
@@ -202,6 +198,10 @@ static int zipm_dev_receive(const struct device *zdev, void *data, size_t size,
 
 	zipm_node_pool_dealloc(dev_data->node_pool, (uint8_t *)desc.addr);
 	k_sem_give(&dev_data->shared_queue_sem);
+
+	if(size != NULL) {
+		*size = desc.size;
+	}
 
 	return fragmented;
 }
@@ -300,7 +300,7 @@ static int zipm_dev_init(const struct device *zdev)
 		}
 	}
 
-	dev_data->node_pool = zipm_node_pool_get((void *)dev_cfg->node_pool_location);
+	dev_data->node_pool = zipm_node_pool_access((void *)dev_cfg->node_pool_location);
 	if(dev_data->node_pool == NULL) {
 		LOG_ERR("Invalid node pool! aborting!");
 		return -ENOENT;

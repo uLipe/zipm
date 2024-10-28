@@ -16,7 +16,7 @@ typedef int (*zipm_register_event_callback_t)(const struct device *zdev, struct 
 typedef int (*zipm_remove_event_callback_t)(struct zipm_callback *cs);
 typedef int (*zipm_send_t)(const struct device *zdev, const void *data, size_t size,
 	      int shared_queue_number, int wait_time);
-typedef int (*zipm_receive_t)(const struct device *zdev, void *data, size_t size,
+typedef int (*zipm_receive_t)(const struct device *zdev, void *data, size_t *size,
 		 int shared_queue_number);
 typedef int (*zipm_flush_t)(const struct device *zdev, int shared_queue_number);
 
