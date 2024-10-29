@@ -4,6 +4,10 @@ ZIPM Ping Pong sample
 #####################
 
 .. image:: doc/zipm_ping_pong.gif
+    :witdh: 50 %
+
+.. image:: doc/thingy53_zipm_ping_pong.gif
+    :witdh: 50 %
 
 This sample is split into two project a tx project that uses shared queue 0 as
 a doorbell, that periodically bothers the rx unit. The rx project waits for
