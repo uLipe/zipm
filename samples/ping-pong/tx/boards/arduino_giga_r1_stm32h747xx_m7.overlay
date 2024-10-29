@@ -64,6 +64,8 @@ zephyr_udc0: &usbotg_fs {
         node-pool = <&zipm_pool>;
         shared-queues = <&zipm_doorbell_queue &zipm_rx_queue>;
         ipc = <&mailbox>;
+		tx-id = <11>;
+		rx-id = <10>;
 		should-init;
     };
 };

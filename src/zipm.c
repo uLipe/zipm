@@ -8,6 +8,8 @@
 
 #include <errno.h>
 #include <zephyr/cache.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/mbox.h>
 #include <zipm/zipm.h>
 #include "zipm_node_pool.h"
 #include "zipm_shared_queue.h"
@@ -18,6 +20,8 @@ LOG_MODULE_REGISTER(zipm, CONFIG_LOG_DEFAULT_LEVEL);
 
 struct zipm_device_config {
 	const struct device *ipc_device;
+	uint8_t tx_ipc_id;
+	uint8_t rx_ipc_id;
 	uint32_t node_pool_location;
 	uint32_t node_pool_block_size;
 	uint32_t node_pool_blocks_avail;
@@ -124,7 +128,7 @@ static int zipm_dev_send(const struct device *zdev, const void *data, size_t siz
 			return ret;
 		}
 
-		return ipm_send(dev_cfg->ipc_device, 0, 0, NULL, 0);	
+		return mbox_send(dev_cfg->ipc_device, dev_cfg->tx_ipc_id, NULL);	
 	}
 	
 	do {
@@ -163,7 +167,7 @@ static int zipm_dev_send(const struct device *zdev, const void *data, size_t siz
 		}
 
 	} while (remaining);
-	return ipm_send(dev_cfg->ipc_device, 0, 0, NULL, 0);
+	return mbox_send(dev_cfg->ipc_device, dev_cfg->tx_ipc_id, NULL);
 }
 
 static int zipm_dev_receive(const struct device *zdev, void *data, size_t *size,
@@ -233,13 +237,16 @@ static int zipm_dev_flush(const struct device *zdev, int shared_queue_number)
 	} while(!ret);
 
 	k_sem_give(&dev_data->shared_queue_sem);
-	return ipm_send(dev_cfg->ipc_device, 0, 0, NULL, 0);
+	return mbox_send(dev_cfg->ipc_device, dev_cfg->tx_ipc_id, NULL);
 }
 
-static void zipm_dev_ipm_isr(const struct device *ipcdev, void *user_data,
-			       uint32_t id, volatile void *data)
+static void zipm_dev_mbox_isr(const struct device *ipcdev, mbox_channel_id_t id,
+		     void *user_data, struct mbox_msg *data)
 {
 	ARG_UNUSED(ipcdev);
+	ARG_UNUSED(data);
+	ARG_UNUSED(id);
+
 	const struct device *zdev = user_data;
 	struct zipm_device_data *dev_data = zdev->data;
 	dev_data->self = (struct device *)zdev;
@@ -313,8 +320,18 @@ static int zipm_dev_init(const struct device *zdev)
 	k_sem_init(&dev_data->shared_queue_sem, 0, 1);
 	k_work_init(&dev_data->work_link, zipm_dev_work_handler);
 	sys_dlist_init(&dev_data->callbacks);
-	ipm_register_callback(dev_cfg->ipc_device, zipm_dev_ipm_isr, (void *)zdev);
-	ipm_set_enabled(dev_cfg->ipc_device, 1);
+	
+	ret = mbox_register_callback(dev_cfg->ipc_device, dev_cfg->rx_ipc_id, zipm_dev_mbox_isr, (void *)zdev);
+	if (ret < 0) {
+		LOG_ERR("Failed to set the MBOX callback!");
+		return ret;
+	}
+
+	ret = mbox_set_enabled(dev_cfg->ipc_device, dev_cfg->rx_ipc_id, 1);
+	if (ret < 0) {
+		LOG_ERR("Failed to enable the MBOX interrupt!");
+		return ret;
+	}
 
 	return 0;
 }
@@ -337,6 +354,8 @@ static uint32_t zipm_queues_addr_##n[DT_INST_PROP_LEN(n, shared_queues)] = {			\
 																						\
 static const  struct zipm_device_config zipm_cfg_##n = {								\
 	.ipc_device = DEVICE_DT_GET(DT_INST_PROP(n, ipc)),									\
+	.tx_ipc_id = DT_INST_PROP(n, tx_id),												\
+	.rx_ipc_id = DT_INST_PROP(n, rx_id),												\
 	.node_pool_location = DT_REG_ADDR(DT_INST_PROP(n, node_pool)),						\
 	.queues_location = &zipm_queues_addr_##n[0],										\
 	.node_pool_location = DT_REG_ADDR(DT_INST_PROP(n, node_pool)),						\

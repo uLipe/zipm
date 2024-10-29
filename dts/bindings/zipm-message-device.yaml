@@ -57,6 +57,18 @@ properties:
     type: phandle
     description: |
       reference to the cross-core device node
+
+  tx-id:
+    required: true
+    type: int
+    description: |
+      tx channel used for mailbox signal
+
+  rx-id:
+    required: true
+    type: int
+    description: |
+      rx channel used for mailbox signal
   
   should-init:
     type: boolean

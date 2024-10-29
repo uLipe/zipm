@@ -47,6 +47,8 @@
         node-pool = <&zipm_pool>;
         shared-queues = <&zipm_doorbell_queue &zipm_tx_queue>;
         ipc = <&mailbox>;
+		tx-id = <10>;
+		rx-id = <11>;
     };
 };
 

@@ -11,8 +11,6 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/ipm.h>
 
 #ifdef __cplusplus
 extern "C" {
