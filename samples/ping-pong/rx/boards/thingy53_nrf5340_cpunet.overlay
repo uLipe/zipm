@@ -1,0 +1,37 @@
+/*
+ * Copyright (c) 2024 Felipe Neves
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&sram0_shared {
+	#address-cells = <1>;
+	#size-cells = <0>;
+  
+	zipm_pool: zipm_pool@20078000 {
+		compatible = "zipm,node-pool";
+		block-size = <32>;
+		nodes-quantity = <32>;
+		reg = <0x20078000>;
+	};
+
+	zipm_doorbell_queue: zipm_doorbell_queue@2007C000 {
+		compatible = "zipm,shared-queue";
+		reg = <0x2007C000>;
+	};
+  
+	zipm_rx_queue: zipm_rx_queue@2007C400 {
+		compatible = "zipm,shared-queue";
+		reg = <0x2007C400>;
+	};
+
+	zipm_device0: zipm_device {
+        compatible = "zipm,message-device";
+        status = "okay";
+        node-pool = <&zipm_pool>;
+        shared-queues = <&zipm_doorbell_queue &zipm_rx_queue>;
+        ipc = <&mbox>;
+		tx-id = <1>;
+		rx-id = <0>;
+    };
+};
