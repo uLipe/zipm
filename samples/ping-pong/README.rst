@@ -74,24 +74,3 @@ message from primary core arriving to it:
 
 You should see also the LED0 (if present) on your board blinking
 every time an event arrives to one of the CPUs.
-
-STM32H74xx dual core users, please read!
-****************************************
-
-We use for the shared memory the SRAM4 region, and for some reason the Zephyr
-kernel does not map this region as a non-cacheable area, which may cause issues
-and data loss when using ZIPM, the current workaround I found was to patch
-the `mpu_regions.c` files located under `zephyr/soc/st/stm32h7/mpu_regions.c`,
-
-Inside of this file, there is an vector with memory regions, to make sure 
-ZIPM will work proper add on the vector the SRAM4 and set the non-cacheable
-attribute as shown below:
-
-.. code-block:: c
-
-    MPU_REGION_ENTRY("SRAM4",
-                    DT_REG_ADDR(DT_NODELABEL(sram4)),
-                    REGION_RAM_NOCACHE_ATTR(REGION_64K)),
-
-It probably there is an way of doing this out-of-tree, that needs
-to be investigated later.

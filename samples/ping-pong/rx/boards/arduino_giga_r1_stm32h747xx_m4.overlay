@@ -4,7 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-&sram4 {
+ / {
+	chosen {
+		/delete-property/ zephyr,ipc_shm;
+	};
+
+	/* We redefine the memory and remove the cache attr due to cache coherence issues */
+	/delete-node/ memory@38000000;
+
+	shared_ram: memory@38000000 {
+		 zephyr,memory-region = "shared_ram";
+		 compatible = "zephyr,memory-region", "mmio-sram";
+		 reg = <0x38000000 0x10000>;
+		 zephyr,memory-attr = <( DT_MEM_ARM(ATTR_MPU_RAM_NOCACHE) )>;
+	 };
+};
+
+&shared_ram {
 	#address-cells = <1>;
 	#size-cells = <0>;
   
