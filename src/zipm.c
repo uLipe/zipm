@@ -11,8 +11,8 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/mbox.h>
 #include <zipm/zipm.h>
-#include "zipm_node_pool.h"
-#include "zipm_shared_queue.h"
+#include "core/zipm_node_pool.h"
+#include "core/zipm_shared_queue.h"
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>

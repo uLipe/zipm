@@ -9,7 +9,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <zephyr/kernel.h>
 
 #define ZIPM_NODE_FLAGS_END     (1 << 0)
 #define ZIPM_NODE_FLAGS_NEXT    (1 << 1)

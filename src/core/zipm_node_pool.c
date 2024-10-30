@@ -5,32 +5,11 @@
  */
 
 #include <string.h>
-#include <zephyr/kernel.h>
 #include "zipm_node_pool.h"
-#include <zephyr/sys/atomic.h>
 
 #define ZIPM_NODE_POOL_MAGIC_1		0x5a49504d
 #define ZIPM_NODE_POOL_MAGIC_2 		0x4e4f4445
-#define ZIPM_NODE_POOL_LOCK_FREE	0x4d50495a
 #define ZIPM_NODE_POOL_MIN_BSIZE	16
-
-static inline void zipm_node_pool_lock(volatile const struct zipm_node_pool_header *h)
-{
-	int key = irq_lock();
-	while (!atomic_cas((atomic_val_t *)&h->control, ZIPM_NODE_POOL_LOCK_FREE,
-			   ZIPM_NODE_POOL_MAGIC_1)) {
-		;
-	}
-	irq_unlock(key);
-}
-
-static inline void zipm_node_pool_unlock(volatile const struct zipm_node_pool_header *h)
-{
-	int key = irq_lock();
-	atomic_set((atomic_val_t *)&h->control, ZIPM_NODE_POOL_LOCK_FREE);
-	irq_unlock(key);
-
-}
 
 int zipm_node_pool_initialize(uint32_t block_size,
 			      uint32_t blocks_avail, volatile void *shared_memory_address)
@@ -53,8 +32,8 @@ int zipm_node_pool_initialize(uint32_t block_size,
 	addr += (sizeof(struct zipm_node_pool_header));
 	d = (sys_dnode_t *)addr;
 
-	int key = irq_lock();
-	atomic_set((atomic_t *)&h->control, 0);
+	ZIPM_IRQ_LOCK();
+	ZIPM_ATOMIC_SET(&h->control, 0);
 	h->block_size = block_size;
 	h->blocks_avail = blocks_avail;
 	sys_dlist_init(&h->descriptors);
@@ -67,8 +46,8 @@ int zipm_node_pool_initialize(uint32_t block_size,
 
 	h->magic_1 = ZIPM_NODE_POOL_MAGIC_1;
 	h->magic_2 = ZIPM_NODE_POOL_MAGIC_2;
-	atomic_set((atomic_t *)&h->control, ZIPM_NODE_POOL_LOCK_FREE);
-	irq_unlock(key);
+	ZIPM_SPIN_UNLOCK_SHM(&h->control);
+	ZIPM_IRQ_UNLOCK();
 
 	return 0;
 }
@@ -108,19 +87,19 @@ uint8_t *zipm_node_pool_alloc(volatile struct zipm_node_pool_header *h)
 	if(h == NULL)
 		return NULL;
 
-	int key = irq_lock();
-	zipm_node_pool_lock(h);
+	ZIPM_IRQ_LOCK();
+	ZIPM_SPIN_LOCK_SHM(&h->control);
 
 	node = sys_dlist_peek_head((sys_dlist_t *)&h->descriptors);
 	if(!node) {
-		zipm_node_pool_unlock(h);
-		irq_unlock(key);
+		ZIPM_SPIN_UNLOCK_SHM(&h->control);
+		ZIPM_IRQ_UNLOCK();
 		return NULL;
 	}
 
 	sys_dlist_remove(node);
-	zipm_node_pool_unlock(h);
-	irq_unlock(key);
+	ZIPM_SPIN_UNLOCK_SHM(&h->control);
+	ZIPM_IRQ_UNLOCK();
 
 	return (uint8_t *)node;
 }
@@ -132,14 +111,14 @@ int zipm_node_pool_dealloc(volatile struct zipm_node_pool_header *h, uint8_t *de
 	if(!h || !desc)
 		return -EINVAL;
 
-	int key = irq_lock();
+	ZIPM_IRQ_LOCK();
+	ZIPM_SPIN_LOCK_SHM(&h->control);
 	
 	node = (sys_dnode_t *)desc;
-	zipm_node_pool_lock(h);
 	sys_dlist_append((sys_dlist_t *)&h->descriptors, node);
-	zipm_node_pool_unlock(h);
-
-	irq_unlock(key);
+	
+	ZIPM_SPIN_UNLOCK_SHM(&h->control);
+	ZIPM_IRQ_UNLOCK();
 
 	return 0;
 }

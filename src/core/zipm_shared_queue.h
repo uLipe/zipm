@@ -9,7 +9,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <zephyr/kernel.h>
+#include "zipm_core_portable.h"
 #include "zipm_node.h"
 
 __packed struct zipm_shared_queue {

@@ -58,7 +58,7 @@ you can refer ``dts/bindings`` folder to check the bindings of the shared
 queues. The API of the ZIPM shared queues are private and not acessible
 directly for the user since the rest of the ZIPM uses it to construct
 the messaging system, but in case of interest on having a reference implementation
-for porting to other systems, please check ``src/zipm_shared_queue.h`` file.
+for porting to other systems, please check ``src/core/zipm_shared_queue.h`` file.
 
 ZIPM Node Pool, the allocator:
 ******************************
@@ -106,7 +106,7 @@ position on the actual physical memory.
 
 Similar on the shared queues, the ``dts/bindings`` folder has its bindings,
 and although its API is not acessible by the user, it can be referred for 
-porting to other systems purpose.
+porting to other systems purpose on ``src/core/zipm_node_pool.h``.
 
 ZIPM Messaging device:
 **********************
@@ -157,3 +157,39 @@ The top level API of ZIPM is documented on the ``include/zipm folder``, where th
 user will find out how to integrate the ZIPM in their application, also the
 ``samples`` folder shows a typical usage of the ZIPM sending data in fragmented
 and non fragmented way.
+
+ZIPM Core porting:
+******************
+
+Althought ZIPM was intended to be used along with Zephyr primitives, its core components
+like node pool and shared queues has a porting layer alowing to other plataforms to have
+access the ZIPM primitives, the goal is to make possible to intercommunicate zephyr with
+others platforms that may reside on the other core, for example Zephyr application management
+runs on the application core while the secondary core runs the SoC manufacturer specific 
+framework like sensor processing, motor control, with this architecture it is expected that
+users might feel comfortable with the possibility to reuse, or virtualize existing components.
+
+The porting later resides into the ``src/core/zipm_core_portable.h``, there is a ``#else``
+directive where user might implement some dependencies of the platform for the shared
+queues and node pool, they are empty so users may use this file as a starting point. Since
+rewrite the linked lists might be something tedious a copy of the Zephyr dlist file is 
+also provided and users does not need to rewrite for their platforms.
+
+The things that need to be ported are the following:
+
+.. code-block:: c
+
+    #else // Not zephyr.
+    #warning "You are running zipm core outside of zephyr, please implement the porting layer!" 
+
+    #define ZIPM_IRQ_LOCK()  //Irq state save
+    #define ZIPM_IRQ_UNLOCK()
+    #define ZIPM_SPIN_LOCK_SHM(x) // spinlocks based on atomic operations
+    #define ZIPM_SPIN_UNLOCK_SHM(x)
+    #define ZIPM_ATOMIC_SET(x, val) //atomic set functions.
+
+    #define __packed __attribute__(("packed"))
+
+    #include "zephyr_list_oot.h"
+
+    #endif

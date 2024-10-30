@@ -42,6 +42,8 @@
         node-pool = <&zipm_pool>;
         shared-queues = <&zipm_tx_queue &zipm_rx_queue>;
         ipc = <&mhu0>;
+		tx-id = <1>;
+		rx-id = <0>;
 		should-init;
     };
 };
