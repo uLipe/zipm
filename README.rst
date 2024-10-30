@@ -41,7 +41,7 @@ latest version of the library from Github, or whatever ``revision`` was
 Getting started with ZIPM
 *************************
 Please refer the ``samples`` folder inside of this module to see some basic use
-cases of ZIPM, they were built for usage without hardware for quick getting started.
+cases of ZIPM.
 
 Understand the design
 *********************

@@ -52,6 +52,11 @@ the data structures implemented:
         uint32_t flags;
     };
 
+In the practice this is the simplified layout in a diagram form:
+
+.. image:: zipm_shared_queue.png
+   :align: center
+
 On the ZIPM the information for filling the initial state as well
 the location of the descriptors array are extracted from the dts file
 you can refer ``dts/bindings`` folder to check the bindings of the shared
@@ -98,6 +103,11 @@ re-appended to the list. Refer below its control structure:
         sys_dlist_t descriptors;
         uint32_t magic_2;
     };
+
+Which is similar to the following diagram:
+
+.. image:: zipm_node_pool.png
+   :align: center
 
 One extra advantage of using a linked list for managing the shared pool is 
 the benefit of the blocks not be continguous, once allocated across different
