@@ -13,7 +13,7 @@
 
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 static const struct device *handle = DEVICE_DT_GET(DT_NODELABEL(zipm_device0));
-static struct zipm_callback callback; 
+static struct zipm_callback callback;
 static const char msg[] = {"Hello from other side! Aka secondary core! \0"};
 static char rx_msg[64] = {0};
 const int doorbell_queue = 0;

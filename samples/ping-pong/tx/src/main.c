@@ -33,7 +33,7 @@ static void zipm_event_callback(const struct device *dev, int sq, void *user_dat
 			if(ret > 0) {
 				copied += block_size;
 			}
-		}while(ret != 0);		
+		}while(ret != 0);
 		printk("%lld: Other core said: %s \n", k_uptime_get(), (const char *)rx_msg);
 	}
 }
@@ -47,9 +47,9 @@ int main(void)
 	}
 
 	gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	
+
 	while(1) {
-		k_msleep(500);	
+		k_msleep(500);
 		zipm_send(handle, &tx_msg, sizeof(tx_msg), doorbell_queue, 0);
 	}
 

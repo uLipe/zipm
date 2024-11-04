@@ -1,0 +1,60 @@
+/*
+ * Copyright (c) 2024 Felipe Neves
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/ {
+	chosen {
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+	};
+
+	aliases {
+		led0 = &red_led_0;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		red_led_0: led_0 {
+			gpios = <&gpio0 8 GPIO_ACTIVE_HIGH>;
+			label = "User LD0";
+		};
+	};
+};
+
+&shm0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	zipm_pool: zipm_pool@3fcbd400 {
+		compatible = "zipm,node-pool";
+		block-size = <32>;
+		nodes-quantity = <32>;
+		reg = <0x3fcbd400>;
+	};
+
+	zipm_doorbell_queue: zipm_doorbell_queue@3fcbd800 {
+		compatible = "zipm,shared-queue";
+		reg = <0x3fcbd800>;
+	};
+
+	zipm_rx_queue: zipm_rx_queue@3fcbdc00 {
+		compatible = "zipm,shared-queue";
+		reg = <0x3fcbdc00>;
+	};
+
+	zipm_device0: zipm_device {
+        compatible = "zipm,message-device";
+        status = "okay";
+        node-pool = <&zipm_pool>;
+        shared-queues = <&zipm_doorbell_queue &zipm_rx_queue>;
+        ipc = <&mbox0>;
+		tx-id = <0>;
+		rx-id = <1>;
+		should-init;
+    };
+};
+
+&mbox0 {
+	status = "okay";
+};
